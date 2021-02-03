@@ -1,0 +1,162 @@
+---
+title: "Milestone report for capstone project"
+author: "Vineet W. Singh"
+date: "4 July 2018"
+output: html_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+### Introduction
+Word prediction algorithms are nearly ubiquitous in mobile devices like smartphones 
+and tablets. The goal of this capstone project is to write an app that can predict words 
+provided that the app is given input words with the main idea being, a rudimentary 
+emulation of the "Swiftkey"" app (available on Android and iOS devices).  
+Such an app is an example of natural language processing and the execution of this 
+capstone project i.e. building a word prediction app will demonstrate the use of 
+various techniques learnt in the Data Science Specialisation programme of John Hopkins University and Coursera.  
+This report touches upon the exploratory data analysis and data preprocessing 
+done in the initial stages of this project. 
+
+### Data Preparation and Exploratory Data Analysis
+The data is available from the Coursera website as a zipped file and it is over
+500MB in size. The compressed data file was downloaded and extracted. Upon extraction, corpora in three languages, English, German were found to be 
+available.  
+The English corpora consists of three corpus (in three files) collected from 
+various blogging or news sites and from twitter. Summary data for each file is outlined in the plots below:  
+```{r chunk1}
+load('globalData.rda')
+filesData<-globalSaveData[[1]]
+globalData<-globalSaveData[[2]]
+colors<-c('darkkhaki','darkolivegreen1','darkslategray1')
+#pie charts
+mainD<-paste("Distribution of",globalData$No_documents,"documents in corpora")
+pie(filesData$No_of_documents, main=mainD,
+    col=colors, labels=filesData$No_of_documents)
+
+legend(1.3, 0.5, c("blog","news","twitter"), cex=0.8,
+fill=colors)
+
+par(mfrow=c(1,2),oma=c(3,0,0,0),family="mono",font=1)
+
+mybar=barplot(filesData$Length_of_longest_line, 
+              main="Longest line length per corpus", 
+        xlab="Corpus",
+        ylab="Length", names.arg=filesData$X1, col=colors,cex.main=0.9)
+
+text(mybar,5000, filesData$Length_of_longest_line,cex=0.8) 
+
+
+mybar2=barplot(filesData$Avg_no_of_words_per_document, 
+               main="Average no. of words per corpus", xlab="Corpus",
+               ylab="Average no. of words",    
+               names.arg=filesData$X1, col=colors,cex.main=0.9)
+
+text(mybar2,3, round(filesData$Avg_no_of_words_per_document,2),cex=0.8)
+```
+
+On average, each document has `r round(globalData$Avg_no_words_per_document,2)` words 
+per document in a total of 4,258,253 documents. The total 
+number of single words or terms in these documents is 56,726,276.  
+The length of the longest line was found to be approximately 40833 characters.
+After the above mentioned preliminary processing and analysis was done, the data 
+was read one line at a time (each line represents one 
+complete document in the corpus).  
+Common words like "a", "the" etc.(normally labelled stopwords), do not 
+lend a lot of meaning to the sentence. Included in sentences for semantic 
+purposes, they are usually not required in prediction algorithms and may be 
+stripped away. Splitting sentences into individual words and removing stopwords can be 
+accomplished in one step by using the 'tokenizers' package along with the 
+'stopwords' package.  
+After reading the document i.e. one line, the length of the line was measured
+and the length of the longest line was stored. The document was split into 
+individual words after the stopwords were removed. To make data management 
+easier, approximately 1000 documents were tokenized and stored in a 
+dataframe which in turn was saved as a hard copy (as an Rdata file). All 
+three corpus were split into a number of files and the information on the 
+number of files is displayed in the plot below.  
+```{r chunk3}
+mybar3=barplot(filesData$No_of_data_files, main="No of data files generated", 
+        xlab="Corpus",
+        ylab="No. of data files", names.arg=filesData$X1, col=colors)
+text(mybar3,250,filesData$No_of_data_files,cex=0.8)
+```
+
+Processing R data files instead of the raw files as the 
+project proceeds will help in random selection as well as random testing and 
+will result in better overall management of the project.  
+The individual words/terms extracted from the corpora were further processed 
+to make a dictionary that contains approximately 97.5% of the individual terms 
+present in 
+the corpora. The dictionary was made by randomly reading in the terms from the corpora and the amount the words in the dictionary covered other documents ("coverage") in the corpora was established by testing against other randomly sampled documents of the corpora. The programme continued this process of building the dictionary until 97.5 % of words in any randomly chosen set of documents were covered by the dictionary.  
+The programme ran for almost 21 hours to include the adequate number of terms that 
+would provide requisite coverage in any randomly chosen set. A total of 171316 unique terms provide 97.5% coverage.  
+Summary histograms of the raw dictionary appears below: 
+```{r chunk4}
+load(file='wordDict.rda')
+load(file='pWordDict.rda')
+par(mfrow=c(2,4),oma=c(5,3,0,0),family="mono",font=1)
+wordTable1<-wordTable[which(wordTable$freq<10),]
+hist(wordTable1$freq,xlab="",ylab="",main="")
+wordTable2<-wordTable[which(wordTable$freq>=10 & wordTable$freq<=100),]
+hist(wordTable2$freq,xlab="",ylab="",main="")
+wordTable3<-wordTable[which(wordTable$freq>=100 & wordTable$freq<500),]
+hist(wordTable3$freq,xlab="",ylab="",main="")
+wordTable4<-wordTable[which(wordTable$freq>=500 & wordTable$freq<1000),]
+hist(wordTable4$freq,xlab="",ylab="",main="")
+wordTable5<-wordTable[which(wordTable$freq>=1000 & wordTable$freq<5000),]
+hist(wordTable5$freq,xlab="",ylab="",main="")
+wordTable6<-wordTable[which(wordTable$freq>=5000 & wordTable$freq<10000),]
+hist(wordTable6$freq,xlab="",ylab="",main="")
+wordTable7<-wordTable[which(wordTable$freq>=10000 & wordTable$freq<20000),]
+hist(wordTable7$freq,xlab="",ylab="",main="")
+wordTable8<-wordTable[which(wordTable$freq>=20000),]
+hist(wordTable8$freq,xlab="",ylab="",main="")
+mtext(text="X-axis: No. of occurances of word in corpora", 
+      side=1,line=1,outer=TRUE,cex=1.00,font=2)
+mtext(text="Histogram of occurances of word vs. frequency of words", 
+      side=1,line=3,outer=TRUE,cex=1.20,font=2)
+mtext(text="Y-axis: Frequency", 
+      side=2,line=1,outer=TRUE,cex=1.0,font=2)
+```
+
+It can be seen from the histogram that words that only occur once in the 
+corpora appear over 80,000 times in the corpora. This could be an indication that
+many of such words could be typing 
+mistakes, spelling mistakes or foreign words and the like, i.e. they are 
+encountered only once in the entire corpora. As such, including such words in 
+our dictionary will only result in inefficiency or inaccuracy of the prediction 
+algorithm.  
+The other end of the scale would also be indicative of a problem and that 
+some words that occur abnormally large number of times but only appear in 
+few documents in the corpora could also be examples of abberations or 
+inaccuracies.
+Indeed, in further processing such words in the raw dictionary are removed 
+to a great extent as the raw dictionary contains a lot of terms that may
+include symbols, special characters, numbers, spelling 
+mistakes, typing mistakes and non-english words. 
+All these terms will not help in our prediction 
+algorithm and need to be stripped away.  
+The programme further stripped away the terms that would not contribute and only 
+53437 unique terms remained in the dictionary. 
+The top 1000 words (in frequncy terms) of the processed dictionary are displayed 
+in the word cloud below. 
+
+```{r chunk 5}
+suppressPackageStartupMessages(library(wordcloud2))
+suppressPackageStartupMessages(library(dplyr))
+spWordDict<-pWordDict %>% arrange(desc(freq))
+wordcloud2(data=spWordDict[1:1000,1:2])
+```
+
+### Further Development
+After processing the dictionary, the programme prepared 2-grams, 3-grams, 
+4-grams which were stored in files. These n-grams were further 
+processed and represented as numbers (index of the terms in the dictionary).  
+It is proposed to use the numbers in a classification algorithm to make 
+a predictive model. This model will be used to make an application that can 
+predict the next possible word, based upon the input words provided to the 
+prediction programme.  

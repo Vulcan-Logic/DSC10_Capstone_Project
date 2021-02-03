@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/408254/0de2fcb3a4ff4df1858bd8a19950e1b0
+bundleId: https://api.rpubs.com/api/v1/document/408254/0de2fcb3a4ff4df1858bd8a19950e1b0
+url: http://rpubs.com/vwsingh/408254
+when: 1532937117.1746
